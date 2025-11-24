@@ -10,6 +10,7 @@ pub struct Config {
     pub ws_url: String,
     pub ws_token: String,
     pub device_id: String,
+    pub client_id: String,
 }
 
 impl Config {
@@ -20,9 +21,10 @@ impl Config {
             .set_default("audio_remote_port", 5677)?
             .set_default("gui_local_port", 5678)?
             .set_default("gui_remote_port", 5679)?
-            .set_default("ws_url", "wss://api.xiaozhi.me/v1/ws")?
+            .set_default("ws_url", "wss://api.tenclass.net/xiaozhi/v1/")?
             .set_default("ws_token", "test-token")?
             .set_default("device_id", "unknown-device")?
+            .set_default("client_id", "unknown-client")?
             // 2. Read from config file (if exists) /etc/xiaozhi/config.json
             .add_source(File::with_name("/etc/xiaozhi/config").required(false))
             // 3. Read from environment variables (e.g. XIAOZHI_WS_TOKEN=...)
@@ -33,6 +35,7 @@ impl Config {
     }
 }
 
+// 默认配置，如果加载配置失败则使用默认值
 impl Default for Config {
     fn default() -> Self {
         Self::new().unwrap_or_else(|_| {
@@ -43,9 +46,10 @@ impl Default for Config {
                 audio_remote_port: 5677,
                 gui_local_port: 5678,
                 gui_remote_port: 5679,
-                ws_url: "wss://api.xiaozhi.me/v1/ws".to_string(),
+                ws_url: "wss://api.tenclass.net/xiaozhi/v1/".to_string(),
                 ws_token: "test-token".to_string(),
                 device_id: "unknown-device".to_string(),
+                client_id: "unknown-client".to_string(),
             }
         })
     }

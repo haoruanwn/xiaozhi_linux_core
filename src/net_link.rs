@@ -29,6 +29,7 @@ struct AudioParams {
     frame_duration: u32,
 }
 
+// Hello Message，用于初始化连接
 #[derive(Serialize)]
 struct HelloMessage {
     #[serde(rename = "type")]
@@ -54,7 +55,7 @@ impl NetLink {
         Self { config, tx, rx_cmd }
     }
 
-    // 主运行循环，如果发生错误断开连接，5秒后重连
+    // 如果发生错误断开连接，5秒后重连
     pub async fn run(mut self) {
         let mut retry_delay = 1;
         loop {
@@ -72,6 +73,7 @@ impl NetLink {
         }
     }
 
+    // 进入连接和主循环，处理WebSocket消息和发送命令
     async fn connect_and_loop(&mut self) -> anyhow::Result<()> {
         // Get MAC address for device_id if not configured
         let device_id = if self.config.device_id == "unknown-device" {
@@ -83,6 +85,7 @@ impl NetLink {
             self.config.device_id.clone()
         };
 
+        // 根据配置构建WebSocket请求
         let url = Url::parse(&self.config.ws_url)?;
         let host = url.host_str().unwrap_or("api.xiaozhi.me");
 
@@ -96,6 +99,7 @@ impl NetLink {
             .header("Sec-WebSocket-Key", tokio_tungstenite::tungstenite::handshake::client::generate_key())
             .header("Authorization", format!("Bearer {}", self.config.ws_token))
             .header("Device-Id", &device_id)
+            .header("Client-Id", &self.config.client_id)
             .header("Protocol-Version", "1")
             .body(())?;
 
@@ -107,7 +111,7 @@ impl NetLink {
 
         self.tx.send(NetEvent::Connected).await?;
 
-        // Send Hello
+        // 发送Hello消息进行初始化链接
         let hello = HelloMessage {
             msg_type: "hello".to_string(),
             version: 1,

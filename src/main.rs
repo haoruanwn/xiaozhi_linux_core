@@ -3,6 +3,7 @@ mod config;
 mod gui_bridge;
 mod net_link;
 mod state_machine;
+mod activation;
 
 use audio_bridge::{AudioBridge, AudioEvent};
 use config::Config;
@@ -12,6 +13,8 @@ use state_machine::SystemState;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use serde::Deserialize;
+use mac_address::get_mac_address;
+use uuid::Uuid;
 
 #[derive(Deserialize)]
 struct ServerMessage {
@@ -29,7 +32,23 @@ async fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     // 加载配置
-    let config = Config::new().unwrap_or_default();
+    let mut config = Config::new().unwrap_or_default();
+
+    // Ensure device_id and client_id are set
+    if config.device_id == "unknown-device" {
+        config.device_id = match get_mac_address() {
+            Ok(Some(mac)) => mac.to_string(),
+            _ => Uuid::new_v4().to_string(),
+        };
+    }
+    if config.client_id == "unknown-client" {
+        // In C++, client_id (uuid) is read from config or generated.
+        // Here we generate one if missing. Ideally we should save it back.
+        // For now, we just generate it in memory, which means re-activation on restart if not saved.
+        // TODO: Implement saving config back to file.
+        config.client_id = Uuid::new_v4().to_string();
+        println!("Generated new Client ID: {}", config.client_id);
+    }
 
     // 创建通道，用于组件间通信
 
@@ -45,6 +64,44 @@ async fn main() -> anyhow::Result<()> {
     // GUI通道
     let (tx_gui_event, mut rx_gui_event) = mpsc::channel::<GuiEvent>(100);
 
+    // 启动GUI桥，与GUI进程通信 (Early start for activation display)
+    let gui_bridge = Arc::new(GuiBridge::new(&config, tx_gui_event).await?);
+    let gui_bridge_clone = gui_bridge.clone();
+    tokio::spawn(async move {
+        if let Err(e) = gui_bridge_clone.run().await {
+            eprintln!("GuiBridge error: {}", e);
+        }
+    });
+
+    // --- 关键修改：在启动 NetLink 前检查激活 ---
+    loop {
+        match activation::check_device_activation(&config).await {
+            activation::ActivationResult::Activated => {
+                println!("Device is activated. Starting WebSocket...");
+                let _ = gui_bridge.send_message(r#"{"type":"toast", "text":"设备已激活"}"#).await;
+                break; // 跳出循环，继续下面的 NetLink 启动
+            }
+            activation::ActivationResult::NeedActivation(code) => {
+                println!("Device NOT activated. Code: {}", code);
+                
+                // 1. GUI 显示验证码
+                let gui_msg = format!(r#"{{"type":"activation", "code":"{}"}}"#, code);
+                let _ = gui_bridge.send_message(&gui_msg).await;
+                
+                // 2. TTS 播报 (这里你需要 sound_app 支持 TTS 指令，或者 Core 自己调用 TTS 引擎)
+                // 简单做法：假设 sound_app 能播报数字
+                // audio_bridge.speak_text(format!("请在手机输入验证码 {}", code)).await;
+                
+                // 3. 等待几秒再轮询
+                tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+            }
+            activation::ActivationResult::Error(e) => {
+                eprintln!("Activation check error: {}. Retrying in 5s...", e);
+                tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+            }
+        }
+    }
+
     // 启动网络链接，与小智服务器通信
     let net_link = NetLink::new(config.clone(), tx_net_event, rx_net_cmd);
     tokio::spawn(async move {
@@ -57,15 +114,6 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(async move {
         if let Err(e) = audio_bridge_clone.run().await {
             eprintln!("AudioBridge error: {}", e);
-        }
-    });
-
-    // 启动GUI桥，与GUI进程通信
-    let gui_bridge = Arc::new(GuiBridge::new(&config, tx_gui_event).await?);
-    let gui_bridge_clone = gui_bridge.clone();
-    tokio::spawn(async move {
-        if let Err(e) = gui_bridge_clone.run().await {
-            eprintln!("GuiBridge error: {}", e);
         }
     });
 
