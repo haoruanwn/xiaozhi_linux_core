@@ -7,14 +7,14 @@ edition = "2024"
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tokio-tungstenite = { version = "0.28.0", default-features = false, features = ["connect", "rustls-tls-native-roots"] }
-reqwest = { version = "0.12.24", default-features = false, features = ["json", "rustls-tls"] }
+tokio-tungstenite = { version = "0.28.0", default-features = false, features = ["connect", "rustls-tls-webpki-roots"] }
+reqwest = { version = "0.12.24", default-features = false, features = ["json", "rustls-tls-webpki-roots"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
 anyhow = "1.0"
 bytes = "1.0"
 futures-util = "0.3"
-url = "2.5"
+url = "2.5.7"
 config = "0.15.19"
 log = "0.4"
 env_logger = "0.11.8"
@@ -24,6 +24,6 @@ uuid = { version = "1.18.1", features = ["v4"] }
 [build-dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-toml = "0.8"
+toml = "0.9.8"
 config = "0.15.19"
 

@@ -41,3 +41,12 @@ Based on analysis of `xiaozhi-linux/control_center/control_center.cpp`:
     *   Full URL: `wss://api.tenclass.net:443/xiaozhi/v1/`
     *   Found in: `control_center.cpp` (lines 523-525)
 
+
+交叉编译
+```bash
+# 例如，编译为 armv7 musleabihf 目标 (静态链接)
+cross build \
+   --target=armv7-unknown-linux-musleabihf \
+   --release \
+   --config 'target.armv7-unknown-linux-musleabihf.rustflags=["-C", "target-feature=+crt-static"]'
+```
