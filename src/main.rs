@@ -77,13 +77,13 @@ async fn main() -> anyhow::Result<()> {
     // 命令通道
     let (tx_net_cmd, rx_net_cmd) = mpsc::channel::<NetCommand>(100);
 
-    // 音频通道
+    // 音频进程通道
     let (tx_audio_event, mut rx_audio_event) = mpsc::channel::<AudioEvent>(100);
 
-    // GUI通道
+    // GUI进程通道
     let (tx_gui_event, mut rx_gui_event) = mpsc::channel::<GuiEvent>(100);
 
-    // IOT通道
+    // IOT进程通道
     let (tx_iot_event, mut rx_iot_event) = mpsc::channel::<IotEvent>(100);
 
     // 启动GUI桥，与GUI进程通信，优先启动，用于播报激活状态或者激活码
@@ -225,7 +225,7 @@ async fn main() -> anyhow::Result<()> {
 
                     // 如果接收到服务器的二进制音频数据，就转发给音频桥播放
                     NetEvent::Binary(data) => {
-                        // println!("Received Audio from Server: {} bytes", data.len());
+                        println!("Received Audio from Server: {} bytes", data.len());
                         if current_state != SystemState::Speaking {
                             current_state = SystemState::Speaking;
                             // Notify GUI: kDeviceStateSpeaking = 6
@@ -273,7 +273,7 @@ async fn main() -> anyhow::Result<()> {
                 match event {
                     AudioEvent::AudioData(data) => {
                         // 打印收到的音频数据长度
-                        // println!("Received Audio from Mic: {} bytes", data.len());
+                        println!("Received Audio from Mic: {} bytes", data.len());
                         
                         // 检查是否需要静音（AEC策略）
                         if should_mute_mic {
@@ -289,6 +289,7 @@ async fn main() -> anyhow::Result<()> {
                                 eprintln!("Failed to send to GUI: {}", e);
                              }
                         }
+                        println!("Forwarding Audio to Server: {} bytes", data.len());
                         // 把音频数据转发给服务器
                         if let Err(e) = tx_net_cmd.send(NetCommand::SendBinary(data)).await {
                             eprintln!("Failed to send audio to NetLink: {}", e);

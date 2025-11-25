@@ -125,7 +125,7 @@ impl NetLink {
             transport: "websocket".to_string(),
             audio_params: AudioParams {
                 format: "opus".to_string(),
-                sample_rate: 16000,
+                sample_rate: 24000,
                 channels: 1,
                 frame_duration: 60,
             },
