@@ -3,13 +3,24 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
+    // 音频进程端口
     pub audio_local_port: u16,
     pub audio_remote_port: u16,
+
+    // GUI进程端口
     pub gui_local_port: u16,
     pub gui_remote_port: u16,
+
+    // IoT进程端口
+    pub iot_local_port: u16,
+    pub iot_remote_port: u16,
+
+    // 网络配置
     pub ws_url: String,
     pub ota_url: String,
     pub ws_token: String,
+
+    // 设备标识
     pub device_id: String,
     pub client_id: String,
 }
@@ -22,6 +33,8 @@ impl Config {
             .set_default("audio_remote_port", 5677)?
             .set_default("gui_local_port", 5678)?
             .set_default("gui_remote_port", 5679)?
+            .set_default("iot_local_port", 5680)?
+            .set_default("iot_remote_port", 5681)?
             .set_default("ws_url", "wss://api.tenclass.net/xiaozhi/v1/")?
             .set_default("ota_url", "https://api.tenclass.net/xiaozhi/ota/")?
             .set_default("ws_token", "test-token")?
@@ -48,6 +61,8 @@ impl Default for Config {
                 audio_remote_port: 5677,
                 gui_local_port: 5678,
                 gui_remote_port: 5679,
+                iot_local_port: 5680,
+                iot_remote_port: 5681,
                 ws_url: "wss://api.tenclass.net/xiaozhi/v1/".to_string(),
                 ota_url: "https://api.tenclass.net/xiaozhi/ota/".to_string(),
                 ws_token: "test-token".to_string(),

@@ -119,18 +119,18 @@ impl NetLink {
         self.tx.send(NetEvent::Connected).await?;
 
         // 发送Hello消息进行初始化链接
-        // Use raw JSON string to match C++ implementation exactly
-        let hello_json = r#"{
-            "type": "hello",
-            "version": 1,
-            "transport": "websocket",
-            "audio_params": {
-                "format": "opus",
-                "sample_rate": 16000,
-                "channels": 1,
-                "frame_duration": 60
-            }
-        }"#;
+        let hello_msg = HelloMessage {
+            msg_type: "hello".to_string(),
+            version: 1,
+            transport: "websocket".to_string(),
+            audio_params: AudioParams {
+                format: "opus".to_string(),
+                sample_rate: 16000,
+                channels: 1,
+                frame_duration: 60,
+            },
+        };
+        let hello_json = serde_json::to_string(&hello_msg)?;
 
         println!("Sending Hello: {}", hello_json);
         write.send(Message::Text(hello_json.into())).await?;
