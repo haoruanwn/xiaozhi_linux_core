@@ -38,6 +38,10 @@ ws_token = "test-token"
 device_id = "unknown-device"
 client_id = "unknown-client"
 
+# 功能开关
+[features]
+enable_tts_display = false
+
 # Hello消息参数
 [hello_message]
 format = "opus"

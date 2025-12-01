@@ -5,3 +5,4 @@
 
 # 忽略生成的config文件
 xiaozhi_config.json
+.DS_Store

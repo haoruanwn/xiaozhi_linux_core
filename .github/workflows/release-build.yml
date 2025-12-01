@@ -19,7 +19,13 @@ jobs:
       matrix:
         include:
           - target: armv7-unknown-linux-musleabihf
-            asset_suffix: armv7-musleabihf
+            asset_suffix: armv7-linux-musl
+            env_rustflags: "-C target-feature=+crt-static"
+          - target: aarch64-unknown-linux-musl
+            asset_suffix: aarch64-linux-musl
+            env_rustflags: "-C target-feature=+crt-static"
+          - target: x86_64-unknown-linux-musl
+            asset_suffix: x86_64-linux-musl
             env_rustflags: "-C target-feature=+crt-static"
 
 
