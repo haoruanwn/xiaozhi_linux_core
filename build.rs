@@ -11,6 +11,7 @@ struct Config {
     iot: Iot,
     network: Network,
     hello_message: HelloMessage,
+    features: Features,
 }
 
 #[derive(Deserialize)]
@@ -68,6 +69,11 @@ struct HelloMessage {
     sample_rate: u32,
     channels: u8,
     frame_duration: u32,
+}
+
+#[derive(Deserialize)]
+struct Features {
+    enable_tts_display: bool,
 }
 
 // 在编译时读取 config.toml 并设置环境变量
@@ -141,5 +147,11 @@ fn main() {
     println!(
         "cargo:rustc-env=HELLO_FRAME_DURATION={}",
         config.hello_message.frame_duration
+    );
+
+    // 功能开关
+    println!(
+        "cargo:rustc-env=ENABLE_TTS_DISPLAY={}",
+        config.features.enable_tts_display
     );
 }

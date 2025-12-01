@@ -42,6 +42,9 @@ pub struct Config {
     pub hello_sample_rate: u32,
     pub hello_channels: u8,
     pub hello_frame_duration: u32,
+
+    // 功能开关
+    pub enable_tts_display: bool,
 }
 
 impl Config {
@@ -113,6 +116,11 @@ impl Config {
             hello_frame_duration: env!("HELLO_FRAME_DURATION")
                 .parse()
                 .map_err(|_| "Failed to parse HELLO_FRAME_DURATION")?,
+
+            // 功能开关
+            enable_tts_display: env!("ENABLE_TTS_DISPLAY")
+                .parse()
+                .map_err(|_| "Failed to parse ENABLE_TTS_DISPLAY")?,
         })
     }
 

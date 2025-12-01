@@ -40,6 +40,7 @@ impl CoreController {
         }
     }
 
+    // 处理来自 NetLink 的事件
     pub async fn handle_net_event(&mut self, event: NetEvent) {
         match event {
             NetEvent::Text(text) => self.process_server_text(text).await,
@@ -74,6 +75,7 @@ impl CoreController {
         }
     }
 
+    // 处理来自服务器的文本消息
     async fn process_server_text(&mut self, text: String) {
         println!("Received Text from Server: {}", text);
 
@@ -127,6 +129,12 @@ impl CoreController {
 
                 if let Some(t) = msg.text {
                     println!("TTS: {}", t);
+                    // 仅在开启TTS显示开关时才将文本发送给GUI显示
+                    if self.config.enable_tts_display {
+                        if let Err(e) = self.gui_bridge.send_message(&text).await {
+                            eprintln!("Failed to send TTS text to GUI: {}", e);
+                        }
+                    }
                 }
             }
             "stt" => {
@@ -140,6 +148,7 @@ impl CoreController {
         }
     }
 
+    // 处理来自服务器的音频数据
     async fn process_server_audio(&mut self, data: Vec<u8>) {
         if self.state != SystemState::Speaking {
             self.state = SystemState::Speaking;
@@ -152,6 +161,7 @@ impl CoreController {
         }
     }
 
+    // 发送自动监听命令
     async fn send_auto_listen_command(&self) {
         let session_id = self.current_session_id.as_deref().unwrap_or("");
         let listen_cmd = format!(
@@ -163,6 +173,7 @@ impl CoreController {
         }
     }
 
+    // 处理来自 AudioBridge 的事件
     pub async fn handle_audio_event(&mut self, event: AudioEvent) {
         match event {
             AudioEvent::AudioData(data) => {
@@ -185,21 +196,21 @@ impl CoreController {
         }
     }
 
+    // 处理来自 GuiBridge 的事件
     pub async fn handle_gui_event(&mut self, event: GuiEvent) {
-        if let GuiEvent::Message(msg) = event {
-            println!("Received Message from GUI: {}", msg);
-            if let Err(e) = self.net_tx.send(NetCommand::SendText(msg)).await {
-                eprintln!("Failed to send text to NetLink: {}", e);
-            }
+        let GuiEvent::Message(msg) = event;
+        println!("Received Message from GUI: {}", msg);
+        if let Err(e) = self.net_tx.send(NetCommand::SendText(msg)).await {
+            eprintln!("Failed to send text to NetLink: {}", e);
         }
     }
 
+    // 处理来自 IotBridge 的事件
     pub async fn handle_iot_event(&mut self, event: IotEvent) {
-        if let IotEvent::Message(msg) = event {
-            println!("Received Message from IoT: {}", msg);
-            if let Err(e) = self.net_tx.send(NetCommand::SendText(msg)).await {
-                eprintln!("Failed to send text to NetLink: {}", e);
-            }
+        let IotEvent::Message(msg) = event;
+        println!("Received Message from IoT: {}", msg);
+        if let Err(e) = self.net_tx.send(NetCommand::SendText(msg)).await {
+            eprintln!("Failed to send text to NetLink: {}", e);
         }
     }
 }
